@@ -14,6 +14,7 @@ const registerValidate = [
 router.post('/register',
  registerValidate,
 async(req,res)=>{
+
  if(req.body.email && req.body.password && req.body.username)
  {
     if(!validator.validate(req.body.email))
@@ -40,6 +41,31 @@ async(req,res)=>{
  }
 });
 
-router
+router.post('/login',async(req,res)=>{
+  console.log(req.body);
+  if(req.body.username && req.body.password && req.body.email)
+  {
+    try{
+      const user = await User.findOne({email:req.body.email});
+      if(user)
+      {
+        const validPassword = await bcrypt.compare(req.body.password,user.password);
+        return res.status(200).json(user);
+      }
+      else{
+        return res.status(401).json("Did not found user");
+      }
+
+    } catch(err)
+    {
+      console.log(err);
+      res.status(404).json('Error');
+    }
+  }
+  else{
+    return res.status(400).json('Provide email and/or password')
+  }
+  return res.send('Hello')
+});
 
 module.exports = router;
