@@ -7,7 +7,7 @@ const {check,validationResult,checkBody} = require('express-validator');
 const registerValidate = [
   check('description').escape().trim()
 ]
-///create post
+
 router.post('/create',registerValidate,async(req,res)=>{
     const newPost = new Post(req.body);
     try{
@@ -18,7 +18,7 @@ router.post('/create',registerValidate,async(req,res)=>{
       return res.status(500).json("Error while saving post!");
     }
 });
-///update post
+
 router.put("/:id",async(req,res)=>{
   if(req.body.postId)
   {
@@ -41,7 +41,6 @@ router.put("/:id",async(req,res)=>{
   }
 })
 
-///delete post
 router.delete("/:id",async(req,res)=>{
   if(req.body.postId)
   {
@@ -58,7 +57,6 @@ router.delete("/:id",async(req,res)=>{
    }
 });
 
-///like/dislike post
 router.put("/:id/like",async(req,res)=>{
 
   try{
@@ -76,8 +74,6 @@ router.put("/:id/like",async(req,res)=>{
   }
 });
 
-
-///get post
 router.get("/:id",async(req,res)=>{
 
   if(req.body.postId)
@@ -96,7 +92,6 @@ router.get("/:id",async(req,res)=>{
 
 });
 
-///get timeline post
 router.get("/time/all",async(req,res)=>{
   try{
     const currentUser = await User.findById(req.body.userId);
