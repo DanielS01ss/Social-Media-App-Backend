@@ -5,9 +5,11 @@ const auth = require("./routes/auth");
 const bodyparser = require("body-parser");
 const users = require('./routes/user');
 const posts = require('./routes/posts');
- 
+const cors = require("cors");
+
 require('dotenv').config();
 app.use(express.json());
+app.use(cors());
 
 mongoose.connect(process.env.MONGO_URL,{useNewUrlParser:true,useUnifiedTopology:true},()=>{
     console.log('Connected to MONGO DB');
@@ -22,6 +24,6 @@ app.get('/',(req,res)=>{
   return res.send('Salut');
 })
 
-app.listen("8000",()=>{
+app.listen(8000,()=>{
  console.log('Salutare frate!');
 });

@@ -19,14 +19,8 @@ const UserSchema = new mongoose.Schema({
     type:String,
     required:true,
   },
-  profilePicture:{
-    type:String,
-    default:""
-  },
-  coverPicture:{
-    type:String,
-    default:""
-  },
+  profilePicture:String,
+  coverPicture:String,
   followers:{
     type:Array,
     default:[]
@@ -55,6 +49,10 @@ const UserSchema = new mongoose.Schema({
   relationship:{
     type:Number,
     enum:[1,2,3]
+  },
+  university:{
+    type:String,
+    max:50,
   }
 
 },
