@@ -8,6 +8,11 @@ const UserSchema = new mongoose.Schema({
     min:3,
     max:30
   },
+  posts:[
+    {
+      postId:String
+    }
+  ],
   password:
   {
     type:String,
@@ -19,14 +24,8 @@ const UserSchema = new mongoose.Schema({
     type:String,
     required:true,
   },
-  profilePicture:{
-    type:String,
-    default:""
-  },
-  coverPicture:{
-    type:String,
-    default:""
-  },
+  profilePicture:String,
+  coverPicture:String,
   followers:{
     type:Array,
     default:[]
@@ -44,20 +43,33 @@ const UserSchema = new mongoose.Schema({
     default:"",
     max:50,
   },
-  city:{
+  livesIn:{
     type:String,
     max:50,
+    default:""
   },
   from:{
     type:String,
     max:50,
+    default:""
   },
   relationship:{
     type:Number,
-    enum:[1,2,3]
+    enum:[0,1,2,3],
+    default:0
+  },
+  education:{
+    type:String,
+    max:50,
+    default:""
+  },
+  conversations:{
+    type:Array,
+    default:[]
   }
-
 },
 {timestamps:true});
+
+UserSchema.index({username:'text'});
 
 module.exports = mongoose.model("User",UserSchema);
