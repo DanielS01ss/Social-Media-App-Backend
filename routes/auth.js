@@ -1,28 +1,26 @@
 const router = require("express").Router();
+require("dotenv").config();
 const bcrypt = require("bcrypt");
 const User = require('../models/Users');
+const Token = require("../models/Tokens");
 const {check,validationResult,checkBody} = require('express-validator');
 const validator = require('email-validator');
 const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
+const jwt = require("jsonwebtoken");
+const verifyToken = require('../utility-functions/verifyToken.js');
+const jwtDecode = require("jwt-decode");
 
 const registerValidate = [
   check('username').isLength({min:8}).escape().trim(),
   check('email','This must be an email').isEmail()
 ];
 
-
-router.post("/exists",async(req,res)=>{
-  const response = await User.countDocuments({username:req.body.username});
-  console.log(response);
-  res.status(200).send("s");
-})
-
 router.post('/register',
  registerValidate,
 async(req,res)=>{
-  console.log(req.body);
+
  if(req.body.email && req.body.password && req.body.username)
  {
     if(!validator.validate(req.body.email))
@@ -30,12 +28,10 @@ async(req,res)=>{
       return res.status(401).json('Invalid email');
     }
     try{
-      // first we check if the user exists
-      // the appropriate code used to signal that the user already exists in database is 422
       const countUsername = await User.countDocuments({username:req.body.username});
       const countEmail = await User.countDocuments({email:req.body.email});
 
-      if(countUsername && countEmail)
+      if( countUsername && countEmail)
       {
         return res.status(422).send("Username and email already exists!");
       } else if(countUsername)
@@ -56,14 +52,15 @@ async(req,res)=>{
         username:req.body.username,
         email:req.body.email,
         password:hashedPassword,
-        profilePicture:defBkgData,
-        coverPicture:defProfPic
+        profilePicture:defaultProfilePic.toString("base64") ,
+        coverPicture:defBkgData
       });
        newUser.save();
 
       res.status(200).json();
     } catch(err)
     {
+       console.log("I got an error:",err);
       res.status(500).json(err);
     }
  }
@@ -72,21 +69,40 @@ async(req,res)=>{
  }
 });
 
+
 router.post('/login',async(req,res)=>{
-  console.log(req.body);
-  if(req.body.username && req.body.password && req.body.email)
+
+  if(req.body.email && req.body.password)
   {
     try{
       const user = await User.findOne({email:req.body.email});
       if(user)
       {
         const validPassword = await bcrypt.compare(req.body.password,user.password);
-        return res.status(200).json(user);
+        if(!validPassword)
+        {
+          return res.status(403).json("Forbidden");
+        }
+        else{
+          const myUser = {
+            id:user._id
+          }
+
+          const signed = jwt.sign(myUser,process.env.ACCESS_TOKEN,{expiresIn:'2h'});
+          const refreshTk = jwt.sign({id:1},process.env.REFRESH_TOKEN);
+          const tkModel = new Token();
+          tkModel.refreshToken = refreshTk;
+          tkModel.save();
+          return res.status(200).json({
+            token:signed,
+            refreshToken:refreshTk,
+            user:user
+          });
+        }
       }
       else{
         return res.status(401).json("Did not found user");
       }
-
     } catch(err)
     {
       console.log(err);
@@ -96,7 +112,81 @@ router.post('/login',async(req,res)=>{
   else{
     return res.status(400).json('Provide email and/or password')
   }
-  return res.send('Hello')
+});
+
+
+router.get("/test",verifyToken,(req,res)=>{
+  console.log(req.body);
+  res.send(200);
+})
+
+router.post("/checkToken",(req,res)=>{
+
+  jwt.verify(req.body.token,process.env.ACCESS_TOKEN,(err,user)=>{
+    console.log(err);
+    if(err)
+      return res.sendStatus(403);
+
+  })
+
+  return res.sendStatus(200);
+});
+
+
+
+router.post('/token',async(req,res)=>{
+  console.log(req.body);
+   let refreshToken = req.body.token;
+  //let refreshToken = req.body.token;
+  if(refreshToken  == null)
+    return res.sendStatus(401);
+  const id = jwtDecode(refreshToken).id;
+  refreshToken = refreshToken.trim();
+  if(!id)
+  {
+    return res.status(400);
+  }
+  const myUser = {
+    id:id
+  }
+
+  const dbToken = await Token.countDocuments({refreshToken:refreshToken});
+  const signed = jwt.sign(myUser,process.env.ACCESS_TOKEN,{expiresIn:'2h'});
+  console.log(signed);
+  if(dbToken)
+  {
+
+    return res.json({token:signed});
+  } else {
+    return res.sendStatus(401);
+  }
+
+  return res.sendStatus(200);
+})
+
+router.post("/user",verifyToken,async(req,res)=>{
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(' ')[1];
+  const user = jwtDecode(token).id;
+  const userFound = await User.findById(user);
+
+
+  return res.end(JSON.stringify({user:userFound}));
+})
+
+
+router.get("/data",verifyToken,(req,res)=>{
+  res.send(200);
+})
+
+router.delete("/logout",async(req,res)=>{
+  try{
+  	const deleteRes = await Token.deleteOne({refreshToken:req.body.token});
+       res.sendStatus(200);
+  } catch(err)
+  {
+     return res.sendStatus(500);
+  }
 });
 
 module.exports = router;

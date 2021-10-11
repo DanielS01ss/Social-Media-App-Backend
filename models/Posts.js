@@ -1,10 +1,7 @@
 const mongoose = require("mongoose");
 
 const PostSchema = new mongoose.Schema({
-  userId:{
-    type:String,
-    required:true
-  },
+  userId:String,
   desc:{
     type:String,
     max:500
@@ -15,7 +12,12 @@ const PostSchema = new mongoose.Schema({
   likes:{
     type:Array,
     default:[],
-  }
+  },
+  comments:{
+    type:Array,
+    default:[]
+  },
+  postHolder:Object
 },{timestamps:true});
 
 module.exports = new mongoose.model("Posts",PostSchema);

@@ -8,6 +8,11 @@ const UserSchema = new mongoose.Schema({
     min:3,
     max:30
   },
+  posts:[
+    {
+      postId:String
+    }
+  ],
   password:
   {
     type:String,
@@ -38,24 +43,30 @@ const UserSchema = new mongoose.Schema({
     default:"",
     max:50,
   },
-  city:{
+  livesIn:{
     type:String,
     max:50,
+    default:""
   },
   from:{
     type:String,
     max:50,
+    default:""
   },
   relationship:{
     type:Number,
-    enum:[1,2,3]
+    enum:[0,1,2,3],
+    default:0
   },
-  university:{
+  education:{
     type:String,
     max:50,
+    default:""
   }
 
 },
 {timestamps:true});
+
+UserSchema.index({username:'text'});
 
 module.exports = mongoose.model("User",UserSchema);
