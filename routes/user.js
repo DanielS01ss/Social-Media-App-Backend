@@ -8,8 +8,14 @@ const {check,validationResult,checkBody} = require('express-validator');
 const verifyToken = require("../utility-functions/verifyToken");
 const escape = require("escape-html")
 const jwtDecode = require("jwt-decode");
+const Conversation = require('../models/Conversation.js');
+const uuidv4 = require("uuid").v4;
+
 
 mongoose.set('useFindAndModify', false);
+
+
+
 router.put("/:id/update",
 verifyToken
 ,async(req,res)=>{
@@ -103,6 +109,7 @@ router.put('/:id/follow',verifyToken,async(req,res)=>{
   const userTokenId = jwtDecode(token).id;
   let user;
   let toFollow;
+  const newConvId = uuidv4();
 
   console.log("req.params.id:",req.params.id);
   console.log("userTokenId:",userTokenId);
@@ -119,7 +126,8 @@ router.put('/:id/follow',verifyToken,async(req,res)=>{
     return res.sendStatus(400);
   }
 
- console.log("before userData");
+///creem o noua conversatie intre userul care primeste follow si cel care da follow
+
 
 const userData = {
   username:user._doc.username,
@@ -137,7 +145,11 @@ console.log(toFollow.followers.username);
 console.log( user._doc.username);
 const userFollowedFound = toFollow.followers.find(us=> us.username == user._doc.username)!=undefined;
 
-
+const conversationParticipants = [user._doc._id,toFollow._doc._id];
+const newConversation = new Conversation({
+  participants:conversationParticipants,
+  convId:newConvId
+});
 
 if(userFollowedFound){
   return res.sendStatus(400);
@@ -150,8 +162,11 @@ if(req.params.id == userTokenId)
 
 
 try{
+   await user.updateOne({$push:{conversations:newConvId}});
    await user.updateOne({$push:{followings:toFollowData}});
    await toFollow.updateOne({$push:{followers:userData}});
+   await toFollow.updateOne({$push:{conversations:newConvId}});
+   await newConversation.save();
 }
  catch(err)
 {
@@ -168,6 +183,8 @@ router.put("/:id/unfollow",verifyToken,async(req,res)=>{
   const token = authHeader && authHeader.split(' ')[1];
   const userTokenId = jwtDecode(token).id;
 
+
+
   try{
     user = await User.findById(userTokenId);
   } catch(err){
@@ -183,6 +200,7 @@ router.put("/:id/unfollow",verifyToken,async(req,res)=>{
   let findFollowedUser = toUnfollowUser.followers.find(us=> us.username == user._doc.username)!=undefined;
   console.log(findFollowedUser);
 
+
   try{
     await user.updateOne({$pull:{followings:{username:toUnfollowUser._doc.username}}});
     await toUnfollowUser.updateOne({$pull:{followers:{username:user._doc.username}}});
@@ -197,6 +215,7 @@ router.put("/:id/unfollow",verifyToken,async(req,res)=>{
 
 
 router.post('/search_user',verifyToken,async(req,res)=>{
+
 	
 	if(req.body.searchData && typeof(req.body.searchData) == "string" && req.body.searchData.length>0)
 	{
@@ -209,10 +228,20 @@ router.post('/search_user',verifyToken,async(req,res)=>{
 		   console.log(err);
 		   return res.sendStatus(500);
 		}
-				
+
 	}
 	return res.sendStatus(400);
 });
+
+
+router.post('/create_conversation',verifyToken,async(req,res)=>{
+
+	
+	console.log(req.body);
+	return res.sendStatus(400);
+});
+
+
 
 
 module.exports = router;

@@ -17,6 +17,8 @@ const registerValidate = [
   check('email','This must be an email').isEmail()
 ];
 
+
+
 router.post('/register',
  registerValidate,
 async(req,res)=>{
@@ -174,6 +176,12 @@ router.post("/user",verifyToken,async(req,res)=>{
   return res.end(JSON.stringify({user:userFound}));
 })
 
+/*
+router.post("/create_conversation",(req,res)=>{
+   console.log(req.body);
+   return res.sendStatus(401);	
+});
+*/
 
 router.get("/data",verifyToken,(req,res)=>{
   res.send(200);
