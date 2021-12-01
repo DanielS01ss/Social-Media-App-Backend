@@ -12,11 +12,12 @@ const jwt = require("jsonwebtoken");
 const messagesModel = require("./models/Message.js");
 const messageNotificationModel = require("./models/MessageNotification.js");
 const notificationModel = require("./models/Notification.js");
+const port = process.env.port || 8000;
 
 const jwtDecode = require("jwt-decode");
 const io = require('socket.io')(8080,{
 	cors:{
-	  origin:['http://localhost:3000','http://localhost:3000/user/messages']
+	  origin:['*']
 	},
 });
 
@@ -151,6 +152,6 @@ socket.on('send-message',(msg,convId,senderId,recepientId,senderObj)=>{
 
 
 
-app.listen(8000,()=>{
+app.listen(port,()=>{
  console.log('Salutare frate!');
 });
