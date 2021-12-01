@@ -7,6 +7,7 @@ const users = require('./routes/user');
 const posts = require('./routes/posts');
 const cors = require("cors");
 const messages = require("./routes/messages.js");
+const notifications = require("./routes/notifications.js");
 const jwt = require("jsonwebtoken");
 const messagesModel = require("./models/Message.js");
 const messageNotificationModel = require("./models/MessageNotification.js");
@@ -39,6 +40,7 @@ app.use('/api/message',messages);
 app.use('/api/auth',auth);
 app.use('/api/user',users);
 app.use('/api/posts',posts);
+app.use('/api/notifications',notifications);
 app.use(require('sanitize').middleware);
 app.get('/',(req,res)=>{
   return res.send('Salut');
@@ -68,6 +70,7 @@ io.on('connection',(socket)=>{
 		 socket.disconnect();
 		 return;
 	 }
+console.log("User connected succesfully");
 
 	const userIdFromToken = jwtDecode(token).id;
 	const userData = {
@@ -75,6 +78,12 @@ io.on('connection',(socket)=>{
 		userId:userIdFromToken
 	}
 	connected_people.push(userData);
+
+	socket.on('like',(user,likedPostData)=>{
+		console.log("dsaldfjfdsdkjslsdhlsjhglojgfofdgojhfdghofdgfhfg");
+		console.log(Object.keys(user));
+		console.log(Object.keys(likedPostData));
+	})
 
 
   socket.on('custom-event',(number1,number2)=>{
@@ -85,13 +94,21 @@ io.on('connection',(socket)=>{
 ///aici cand primesc mesaj de pe frontend
 ///vreau sa salvez si notificare
 
-socket.on('send-message',(msg,convId,senderId,recepientId)=>{
+
+socket.on('send-message',(msg,convId,senderId,recepientId,senderObj)=>{
 
 	const m = new messagesModel({
 	   sender:senderId,
 	   content:msg,
 	   conversationId:convId
 	});
+
+	const newNotification = new messageNotificationModel({
+	sender:senderObj,
+	userId:recepientId
+	});
+
+	newNotification.save();
 
 	const man = connected_people.find(pers=>pers.userId == recepientId);
 
@@ -107,15 +124,11 @@ socket.on('send-message',(msg,convId,senderId,recepientId)=>{
 			console.log(convId);
 			console.log(man.socketId);
 			socket.to(man.socketId).emit('sended-message',mSend);
+			socket.to(man.socketId).emit('messagenotification',newNotification);
 	}
 
  ///o data ce mesajul a fost trimis emitem si notificare
- 	const newNotification = new notificationModel({
-	 	sender:senderObj,
-	 	userId:recipientId
- 	});
 
- 	newNotification.save();
 
 	///si putem sa si emitem pentru frontend
 	//daca e emitem notificare
