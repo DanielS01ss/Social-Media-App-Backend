@@ -20,17 +20,17 @@ router.get("/userposts",verifyToken,async(req,res)=>{
     console.log(err);
     return res.sendStatus(500);
   }
-  
+
   return res.status(200).json(fetchedPosts);
 });
 
 router.post('/create',registerValidate,verifyToken,async(req,res)=>{
-	
+
    if(!req.body.description || !typeof(req.body.description)=="string" || (typeof(req.body.description)=="string" && req.body.description.length==0))
     {
       return res.sendStatus(400);
     }
-    	
+
     const newPost = new Post();
     newPost.desc = req.body.description;
     const authHeader = req.headers["authorization"];
@@ -77,7 +77,7 @@ router.post('/create',registerValidate,verifyToken,async(req,res)=>{
       return res.status(500).json("Error while saving post!");
     }
   } else {
-     
+
      return res.sendStatus(400);
   }
 });
@@ -158,7 +158,6 @@ router.put('/:id/comment',registerValidate , verifyToken,async(req,res)=>{
   const token = authHeader && authHeader.split(' ')[1];
   const userTokenId = jwtDecode(token).id;
   let foundUser,foundPost;
-  console.log(req.body);
   if(req.body.comment && typeof(req.body.comment)=="string" && req.body.comment.length>0)
   {
       try{
@@ -207,10 +206,10 @@ router.post("/getposts",verifyToken,async(req,res)=>{
 	const authHeader = req.headers["authorization"];
   	const token = authHeader && authHeader.split(' ')[1];
  	const userTokenId = jwtDecode(token).id;
- 	
+
 	try{
 	  foundPost = await Post.find({userId:userTokenId});
-	  
+
 	} catch(err){
 	  return res.sendStatus(400);
 	}
@@ -225,7 +224,7 @@ router.get("/time/all",verifyToken,async(req,res)=>{
    const authHeader = req.headers["authorization"];
    const token = authHeader && authHeader.split(' ')[1];
    const userTokenId = jwtDecode(token).id;
-  
+
   try{
     const currentUser = await User.findById(userTokenId);
     const userPosts = await Post.find({userId:currentUser._id});
@@ -234,7 +233,7 @@ router.get("/time/all",verifyToken,async(req,res)=>{
           return Post.find({userId:friendId.userId});
       })
     );
-    
+
     res.json(friendPosts);
   } catch(err)
   {

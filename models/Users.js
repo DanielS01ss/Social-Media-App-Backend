@@ -66,6 +66,10 @@ const UserSchema = new mongoose.Schema({
   conversations:{
     type:Array,
     default:[]
+  },
+  conversationsParteners:{
+    type:Array,
+    default:[]
   }
 },
 {timestamps:true});
