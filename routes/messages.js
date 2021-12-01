@@ -8,13 +8,16 @@ const jwtDecode = require("jwt-decode");
 const uuidv4 = require("uuid").v4;
 const cors = require("cors");
 const express = require("express");
-const io = require("socket.io")(8001);
 
-router.post("/create_conversation",verifyToken,async(req,res)=>{
+
+
+
+router.post("/create_conversation",verifyToken,cors({origin:"*"}),async(req,res)=>{
    const authHeader = req.headers["authorization"];
    const token = authHeader && authHeader.split(' ')[1];
    const userTokenId = jwtDecode(token).id;
    let user,messageId = req.body.userId,messagedUser;
+   messagedId = req.body.userId;
    try{
      user = await User.findById(userTokenId);
    } catch{
@@ -26,7 +29,6 @@ router.post("/create_conversation",verifyToken,async(req,res)=>{
    } catch{
      return res.sendStatus(401);
    }
-
 
    if(user && messagedUser)
    {
@@ -80,7 +82,7 @@ router.post("/create_conversation",verifyToken,async(req,res)=>{
 
      return res.sendStatus(200);
      } else {
-     	return res.sendStatus(403);
+     	return res.status(200).json("Already exists");
      }
 
    } else{
@@ -91,7 +93,19 @@ router.post("/create_conversation",verifyToken,async(req,res)=>{
 });
 
 
+router.get("/messages-conv",verifyToken,async(req,res)=>{
 
 
+	const convId = req.headers["cvid"];
+  console.log(convId);
+	const messages = await Message.find({conversationId:convId});
+
+	if(messages!=null)
+	{
+	 return res.status(200).json(messages);
+	}
+	return res.status(404);
+
+});
 
 module.exports = router;
